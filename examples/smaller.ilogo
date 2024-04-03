@@ -1,0 +1,10 @@
+to gc 
+ repeat 1800 [ fd 10 rt :repcount + 0.1 ]  
+end
+
+to pl 
+ repeat 8 [ rt 45 repeat 4 [ repeat 90 [ fd 2 rt 2 ] rt 90 ] ]  
+end
+gc ()
+;pl ()
+

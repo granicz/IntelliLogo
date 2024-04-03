@@ -1,0 +1,116 @@
+﻿{
+module Lexer
+
+open System
+open Parser
+open FSharp.Text.Lexing
+open IntelliLogo
+
+let lexeme = LexBuffer<_>.LexemeString
+
+let newline (lexbuf: LexBuffer<_>) =
+    lexbuf.StartPos <- lexbuf.StartPos.NextLine
+    lexbuf.EndPos <- lexbuf.EndPos.NextLine
+
+let special lexbuf = function
+    | "(" ->    LPAREN (pos.ofToken lexbuf)
+    | ")" ->    RPAREN (pos.ofToken lexbuf)
+    | "[" ->    LBRACK (pos.ofToken lexbuf)
+    | "]" ->    RBRACK (pos.ofToken lexbuf)
+    | "+" ->    PLUS   (pos.ofToken lexbuf)
+    | "-" ->    MINUS  (pos.ofToken lexbuf)
+    | "*" ->    TIMES  (pos.ofToken lexbuf)
+    | "/" ->    DIV    (pos.ofToken lexbuf)
+    | "=" ->    EQ     (pos.ofToken lexbuf)
+    | "<>" ->   NEQ    (pos.ofToken lexbuf)
+    | "<" ->    LT     (pos.ofToken lexbuf)
+    | "<=" ->   LE     (pos.ofToken lexbuf)
+    | ">" ->    GT     (pos.ofToken lexbuf)
+    | ">=" ->   GE     (pos.ofToken lexbuf)
+    | _ ->
+        failwith "Invalid special character or operator"
+
+let number lexbuf (s: string) =
+    NUMBER (float s, pos.ofToken lexbuf)
+
+let id lexbuf (s: string) =
+    match s with
+    | s when s.ToLower()="to" ->
+        TO (pos.ofToken lexbuf)
+    | s when s.ToLower()="repeat" ->
+        REPEAT (pos.ofToken lexbuf)
+    | s when s.ToLower()="if" ->
+        IF (pos.ofToken lexbuf)
+    | s when s.ToLower()="ifelse" ->
+        IFELSE (pos.ofToken lexbuf)
+    | s when s.ToLower()="make" ->
+        MAKE (pos.ofToken lexbuf)
+    | s when s.ToLower()="end" ->
+        END (pos.ofToken lexbuf)
+    | s when s.ToLower()="output" ->
+        OUTPUT (pos.ofToken lexbuf)
+    | s ->
+        ID (s, pos.ofToken lexbuf)
+
+let word lexbuf (s: string) =
+    WORD (s.Substring(1), pos.ofToken lexbuf)
+
+let var lexbuf (s: string) =
+    VAR (s.Substring(1), pos.ofToken lexbuf)
+}
+
+let digit = ['0'-'9']
+let number = digit+ ('.' (digit+))?
+let alpha = ['a'-'z' 'A'-'Z']
+let id = alpha+ (alpha | digit | ['_' '.'])*
+let word = '\"' id
+let variable = ':' id
+let whitespace = ' ' | '\t'
+let newline = '\n' | '\r' '\n'
+let special =
+      '(' | ')' | ',' | '[' | ']'
+    | '+' | '-' | '*' | '/'
+    | '<' | '>' | '=' | "<>" | ">=" | "<="
+
+rule main = parse
+    | number        { number lexbuf (lexeme lexbuf) }
+    | id            { id lexbuf (lexeme lexbuf) }
+    | variable      { var lexbuf (lexeme lexbuf) }
+    | word          { word lexbuf (lexeme lexbuf) }
+    | special       { special lexbuf (lexeme lexbuf) }
+    | whitespace	{ main lexbuf }
+    | newline	    { newline lexbuf; main lexbuf }
+    | ";" [^ '\n']* '\n' { newline lexbuf; main lexbuf }
+    | eof           { EOF(pos.ofToken lexbuf) }
+    | "\'"          { let s, pos = string_literal (pos.ofToken lexbuf) "" lexbuf
+                      STRING (s, pos)
+                    }
+    | _             { raise (ParserError (lexeme lexbuf, pos.ofToken lexbuf)) }
+
+and string_literal pos1 s = parse
+    | "\\" ('\'' | 'n' | 'r' | 't') {
+        let s =
+            match lexeme lexbuf with
+            | "\\\'" ->
+                "\""
+            | "\\n" ->
+                "\n"
+            | "\\r" ->
+                "\r"
+            | "\\t" ->
+                "\t"
+            | _ ->
+                ""
+            |> (+) s
+        let pos = pos.union pos1 (pos.ofToken lexbuf)
+        string_literal pos s lexbuf
+    }
+    | "\'" {
+        s, pos.union pos1 (pos.ofToken lexbuf)
+    }
+    | _ {
+        let c = lexeme lexbuf
+        if c = "\n" then newline lexbuf
+        let pos = pos.union pos1 (pos.ofToken lexbuf)
+        string_literal pos (s+c) lexbuf
+    }

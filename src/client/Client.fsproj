@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="../IntelliLogo/AST.fs" />
+		<Compile Include="../IntelliLogo/Parser.fs" />
+		<Compile Include="../IntelliLogo/Lexer.fs" />
+		<Compile Include="../IntelliLogo/Eval.fs" />
+		<Content Include="index.html" />
+		<Compile Include="Builtins.fs" />
+		<Compile Include="App.fs" />
+		<None Include="wsconfig.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="WebSharper" Version="7.0.6.447-beta5" />
+		<PackageReference Include="WebSharper.FSharp" Version="7.0.6.447-beta5" />
+		<PackageReference Include="WebSharper.FsLexYacc" Version="7.0.0.447-beta5" />
+		<PackageReference Include="WebSharper.MathJS" Version="7.0.6.447-beta5" />
+		<PackageReference Include="WebSharper.UI" Version="7.0.4.447-beta5" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\IntelliLogo\IntelliLogo.fsproj" />
+	</ItemGroup>
+
+</Project>

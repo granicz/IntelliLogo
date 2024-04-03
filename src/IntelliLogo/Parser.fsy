@@ -1,0 +1,248 @@
+%{
+open System
+open IntelliLogo
+open IntelliLogo.AST
+open Microsoft.FSharp.Core.ExtraTopLevelOperators
+%}
+
+%token <float * pos> NUMBER
+%token <string * pos> WORD
+%token <string * pos> STRING
+%token <string * pos> ID
+%token <string * pos> VAR
+
+%token <pos> TO
+%token <pos> REPEAT
+%token <pos> IF
+%token <pos> IFELSE
+%token <pos> MAKE
+%token <pos> END
+%token <pos> OUTPUT
+
+%token <pos> PLUS
+%token <pos> MINUS
+%token <pos> TIMES
+%token <pos> DIV
+%token <pos> EQ
+%token <pos> NEQ
+%token <pos> GT
+%token <pos> GE
+%token <pos> LT
+%token <pos> LE
+
+%token <pos> LPAREN
+%token <pos> RPAREN
+%token <pos> LBRACK
+%token <pos> RBRACK
+
+%token <pos> EOF
+
+%right one_arg_call
+%left GT GE LT LE EQ NEQ
+%left PLUS MINUS
+%left TIMES DIV
+
+%type <AST.Expr * pos> expr
+%type <AST.Statement * pos> statement
+%type <AST.Program> program
+
+%start expr
+%start program
+
+%%
+
+program:
+    | statement_list EOF {
+        fst $1
+    }
+    | EOF {
+        []
+    }
+
+statement:
+    | TO ID var_list_opt statement_list END {
+        let pos = pos.union $1 $5
+        FunDef ($2, $3, fst $4, pos), pos
+    }
+    | REPEAT expr commands {
+        let pos = pos.union $1 (snd $3)
+        Repeat (fst $2, fst $3, pos), pos
+    }
+    | IF expr commands {
+        let pos = pos.union $1 (snd $3)
+        If (fst $2, fst $3, pos), pos
+    }
+    | IFELSE expr commands commands {
+        let pos = pos.union $1 (snd $4)
+        IfElse (fst $2, fst $3, fst $4, pos), pos
+    }
+    | MAKE WORD expr {
+        let pos = pos.union $1 (fst $3).Pos
+        Make ($2, fst $3, pos), pos
+    }
+    | OUTPUT expr {
+        let pos = pos.union $1 (snd $2)
+        Output (fst $2, pos), pos
+    }
+    // Special-handling function calls
+    // Single argument calls can be without parentheses
+    | ID expr %prec one_arg_call {
+        let pos = pos.union (snd $1) (snd $2)
+        Statement.FunCall ($1, [fst $2], pos), pos
+    }
+    // Empty argument calls need ()
+    | ID LPAREN RPAREN {
+        let pos = pos.union (snd $1) $3
+        Statement.FunCall ($1, [], pos), pos
+    }
+    // Multi-argument calls also are parenthesized
+    | ID LPAREN expr_list RPAREN {
+        let pos = pos.union (snd $1) $4
+        Statement.FunCall ($1, fst $3, pos), pos
+    }
+
+statement_list_opt:
+    | {
+        []
+    }
+    | statement_list {
+        (fst $1)
+    }
+
+statement_list:
+    | statement_list_rev {
+        List.rev (fst $1), snd $1
+    }
+
+statement_list_rev:
+    | statement {
+        [fst $1], snd $1
+    }
+    | statement_list_rev statement {
+        fst $2 :: fst $1, pos.union (snd $1) (snd $2)
+    }
+
+commands:
+    | LBRACK statement_list_opt RBRACK {
+        $2, pos.union $1 $3
+    }
+
+simple_expr:
+    | VAR {
+        Var (fst $1, snd $1), snd $1
+    }
+    | NUMBER {
+        Number (fst $1, snd $1), snd $1
+    }
+    | WORD {
+        Word (fst $1, snd $1), snd $1
+    }
+    | STRING {
+        Text (fst $1, snd $1), snd $1
+    }
+
+expr:
+    | simple_expr {
+        fst $1, snd $1
+    }
+    // Special-handling function calls
+    // Single argument calls can be without parentheses
+    | ID expr %prec one_arg_call {
+        let pos = pos.union (snd $1) (snd $2)
+        FunCall ($1, [fst $2], pos), pos
+    }
+    // Empty argument calls need ()
+    | ID LPAREN RPAREN {
+        let pos = pos.union (snd $1) $3
+        FunCall ($1, [], pos), pos
+    }
+    // Multi-argument calls also are parenthesized
+    | ID LPAREN expr_list RPAREN {
+        let pos = pos.union (snd $1) $4
+        FunCall ($1, fst $3, pos), pos
+    }
+    // A list is an expression, not to be confused with statement blocks.
+    | LBRACK expr_list_opt RBRACK {
+        let pos = pos.union $1 $3
+        List ($2, pos), pos
+    }
+    | expr PLUS expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Add (fst $1, fst $3, pos), pos
+    }
+    | expr MINUS expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Sub (fst $1, fst $3, pos), pos
+    }
+    | expr TIMES expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Mul (fst $1, fst $3, pos), pos
+    }
+    | expr DIV expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Div (fst $1, fst $3, pos), pos
+    }
+    | expr LE expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Le (fst $1, fst $3, pos), pos
+    }
+    | expr LT expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Lt (fst $1, fst $3, pos), pos
+    }
+    | expr GE expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Ge (fst $1, fst $3, pos), pos
+    }
+    | expr GT expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Gt (fst $1, fst $3, pos), pos
+    }
+    | expr EQ expr {
+        let pos = pos.union (snd $1) (snd $3)
+        Eq (fst $1, fst $3, pos), pos
+    }
+    | expr NEQ expr {
+        let pos = pos.union (snd $1) (snd $3)
+        NotEq (fst $1, fst $3, pos), pos
+    }
+
+expr_list_opt:
+    | {
+        []
+    }
+    | expr_list {
+        fst $1
+    }
+
+expr_list:
+    | expr_list_rev {
+        List.rev (fst $1), snd $1
+    }
+
+expr_list_rev:
+    | expr {
+        [fst $1], snd $1
+    }
+    | expr_list_rev expr {
+        fst $2 :: fst $1, pos.union (snd $1) (snd $2)
+    }
+
+var_list_opt:
+    | {
+        []
+    }
+    | var_list {
+        fst $1
+    }
+
+var_list:
+    | var_list_rev { List.rev (fst $1), snd $1 }
+
+var_list_rev:
+    | VAR {
+        [$1], snd $1
+    }
+    | var_list_rev VAR {
+        $2 :: fst $1, pos.union (snd $1) (snd $2)
+    }

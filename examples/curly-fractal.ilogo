@@ -1,0 +1,54 @@
+; Adapted from:
+; http://fmslogo.sourceforge.net/workshop/fractals.shtml 
+
+TO CURLY.FRACTAL :SIZE
+
+  IF :SIZE < 0.5 [ STOP() ]
+
+  REPEAT 360 [
+
+    IF :REPCOUNT = 5 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 2
+      RIGHT 90
+    ]
+
+    IF :REPCOUNT = 10 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 5
+      RIGHT 90
+    ]
+
+    IF :REPCOUNT = 15 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 5
+      RIGHT 90
+    ]
+
+    IF :REPCOUNT = 20 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 4
+      RIGHT 90
+    ]
+
+    IF :REPCOUNT = 25 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 5
+      RIGHT 90
+    ]
+
+    IF :REPCOUNT = 30 [
+      LEFT 90
+      CURLY.FRACTAL :SIZE / 8
+      RIGHT 90
+    ]  
+
+    FORWARD :SIZE
+    RIGHT :REPCOUNT
+ ]
+
+ RIGHT 180
+
+END
+
+CURLY.FRACTAL 30

@@ -1,0 +1,39 @@
+// IntelliLogo - a variant of Logo
+//
+// Key differences:
+// * In multi-argument function calls, the arguments are in parentheses
+
+to add :x :y
+    output :x + :y
+end
+
+to add5 :x
+    output add (60 :x)
+end
+
+make "i 1
+
+OUTPUT PRINT (10 :i)
+
+if :i < 10 [output 1]
+ifelse :i > 20 [output 2] [output 3]
+
+OUTPUT PRINT (20 :i)
+
+make "j 1
+
+// OUTPUT DEBUG_ENVIRONMENT 1
+
+make "i add (10 20)
+
+OUTPUT PRINT (30 :i)
+
+OUTPUT DEBUG_ENVIRONMENT 1
+
+make "i add5 :i
+
+OUTPUT PRINT (40 :i)
+
+output add5 :i
+
+output add5 500

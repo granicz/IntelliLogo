@@ -1,0 +1,25 @@
+; Adapted from:
+; http://fmslogo.sourceforge.net/workshop/fractals.shtml 
+
+TO TRIANGLE.FRACTAL :LENGTH :DEPTH
+
+  ; base case:
+  ; just move forward, no more squares
+  IF :DEPTH = 0 [
+    FORWARD :LENGTH
+    STOP ()
+  ]
+
+  ; recursive case:
+  ; draw a triangle such that each side of
+  ; the triangle has TRIANGLE.FRACTAL in it.
+  REPEAT 3 [
+      FORWARD :LENGTH / 3
+      TRIANGLE.FRACTAL (:LENGTH / 3 :DEPTH - 1)
+      FORWARD :LENGTH / 3
+
+      RIGHT 120
+  ]
+END
+
+TRIANGLE.FRACTAL (200 4)

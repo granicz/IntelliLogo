@@ -1,0 +1,14 @@
+/.vs
+obj
+bin
+/skeleton
+/dist
+/src/client/node_modules
+/src/client/wwwroot/
+/src/client/Scripts
+/src/IntelliLogo/Lexer.fs
+/src/IntelliLogo/Lexer.fsi
+/src/IntelliLogo/Parser.fs
+/src/IntelliLogo/Parser.fsi
+/src/IntelliLogo/Parser.fsyacc.output
+/src/client/websharper.log
