@@ -51,10 +51,6 @@ module AST =
 
     type Program = Statement list
 
-    and ProgramPart =
-        | Statement of Statement * pos
-        | Expression of Expr * pos
-
     and Commands = Statement list
     
     and Statement =
@@ -64,6 +60,10 @@ module AST =
         | IfElse of Expr * Commands * Commands * pos
         // make "i 1
         | Make of id * Expr * pos
+        // makelocal "i 1
+        | MakeLocal of id * Expr * pos
+        // local "i
+        | Local of id * pos
         // Function calls are assumed to be commands
         | FunCall of id * Expr list * pos
         // Expressions can be returned with "output"

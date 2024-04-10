@@ -83,68 +83,68 @@ module ClientBuiltins =
                 move(State.CurrentX-dist*Math.Cos(rad), State.CurrentY+dist*Math.Sin(rad))
 
     // Remember to add functions with lowercase names
-    let Core : (string list * (Environment -> IntelliLogo.pos -> Value list -> (Environment * Value))) list = [
+    let Core : (string list * (Environment -> IntelliLogo.pos -> Value list -> ((Environment * Value) * bool))) list = [
         // home -> pendown is unchanged
         ["home"], (fun env _ args ->
             State.CurrentX <- 500
             State.CurrentY <- 500
-            env, Value.Nothing
+            (env, Value.Nothing), false
         )
-        ["rt"; "right"], (fun env _ args ->
+        ["rt"; "right"], (fun env pos args ->
             match args with
             | [Value.Number n] ->
                 TurtleOperations.RT n
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["lt"; "left"], (fun env _ args ->
+        ["lt"; "left"], (fun env pos args ->
             match args with
             | [Value.Number n] ->
                 TurtleOperations.LT n
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["fd"; "forward"], (fun env _ args ->
+        ["fd"; "forward"], (fun env pos args ->
             match args with
             | [Value.Number n] ->
                 TurtleOperations.FD n
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["bk"; "back"], (fun env _ args ->
+        ["bk"; "back"], (fun env pos args ->
             match args with
             | [Value.Number n] ->
                 TurtleOperations.BK n
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["pu"; "penup"], (fun env _ args ->
+        ["pu"; "penup"], (fun env pos args ->
             match args with
             | [] ->
                 State.PenDown <- false
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["pd"; "pendown"], (fun env _ args ->
+        ["pd"; "pendown"], (fun env pos args ->
             match args with
             | [] ->
                 State.PenDown <- true
             | _ ->
-                failwithf "Expected number, got %A" args
-            env, Value.Nothing
+                raise (NumberExpectedButGot(args, pos))
+            (env, Value.Nothing), false
         )
-        ["print"], (fun env _ args ->
+        ["print"], (fun env pos args ->
             args |> List.iter (fun arg ->
-                let s = ValueToString arg
+                let s = ValueToString pos arg
                 if State.Console.IsSome then
                     Var.Concat(State.Console.Value, s + "\n")
             )
-            env, Value.Nothing
+            (env, Value.Nothing), false
         )
     ]
 

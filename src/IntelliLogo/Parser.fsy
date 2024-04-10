@@ -16,6 +16,8 @@ open Microsoft.FSharp.Core.ExtraTopLevelOperators
 %token <pos> IF
 %token <pos> IFELSE
 %token <pos> MAKE
+%token <pos> MAKELOCAL
+%token <pos> LOCAL
 %token <pos> END
 %token <pos> OUTPUT
 
@@ -79,6 +81,14 @@ statement:
     | MAKE WORD expr {
         let pos = pos.union $1 (fst $3).Pos
         Make ($2, fst $3, pos), pos
+    }
+    | MAKELOCAL WORD expr {
+        let pos = pos.union $1 (fst $3).Pos
+        MakeLocal ($2, fst $3, pos), pos
+    }
+    | LOCAL WORD {
+        let pos = pos.union $1 (snd $2)
+        Local ($2, pos), pos
     }
     | OUTPUT expr {
         let pos = pos.union $1 (snd $2)

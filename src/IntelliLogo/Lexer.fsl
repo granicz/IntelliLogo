@@ -45,6 +45,10 @@ let id lexbuf (s: string) =
         IFELSE (pos.ofToken lexbuf)
     | s when s.ToLower()="make" ->
         MAKE (pos.ofToken lexbuf)
+    | s when s.ToLower()="makelocal" ->
+        MAKELOCAL (pos.ofToken lexbuf)
+    | s when s.ToLower()="local" ->
+        LOCAL (pos.ofToken lexbuf)
     | s when s.ToLower()="end" ->
         END (pos.ofToken lexbuf)
     | s when s.ToLower()="output" ->

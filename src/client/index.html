@@ -76,6 +76,52 @@
             .menu-overlay.visible {
                 display: block;
             }
+
+        /* Popup overlay */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it sits above other content */
+        }
+
+        /* Popup box */
+        .popup-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .popup-buttons {
+            margin-top: 20px;
+        }
+
+        @keyframes progressbar {
+            0%, 100% {
+                background-size: 0% 100%;
+            }
+
+            99.9% {
+                background-size: 100% 100%;
+            }
+        }
+
+        .animate-progressbar {
+            animation: progressbar 1s linear infinite;
+            background: linear-gradient(to right, #ccc 0%, #aaa 100%);
+            background-size: 0% 100%;
+            background-repeat: no-repeat;
+        }
     </style>
 </head>
 <body class="flex flex-col h-screen m-0 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -109,7 +155,8 @@
 
             <div class="flex justify-center">
                 <div class="font-bold relative inline-block text-gray-700 mr-4">
-                    <select ws-var="Examples" ws-anchor="ExamplesNode" class="block appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" id="styledSelect">
+                    <select ws-var="Examples" ws-onchange="ExampleChanged" ws-anchor="ExamplesNode"
+                            class="block appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" id="styledSelect">
                         <option value="" disabled selected>Select example...</option>
                         <option ws-replace="ExampleOptions"></option>
                     </select>
@@ -121,7 +168,7 @@
                     </div>
                 </div>
             </div>
- 
+
             <div class="flex justify-end">
                 <button ws-onclick="OnRun" title="Alt+R" id="playButton" class="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 active:bg-green-800 text-white font-bold py-1 px-2 text-lg rounded outline-none focus:outline-none mr-2 w-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -145,11 +192,10 @@
 
         <div class="main-panel flex flex-1 overflow-hidden">
             <textarea ws-anchor="EditorNode"
-                ws-var="Editor" ws-oninput="EditorOnInput" ws-onkeyup="EditorOnKeyUp"
-                ws-onclick="EditorOnClick" ws-onscroll="EditorOnScroll" ws-onkeydown="EditorOnKeyDown"
-                style="width:33%;overflow-x:auto;overflow-wrap:normal;text-wrap:nowrap;line-height:normal;font-weight:bold;" placeholder="<type your code here>"
-                class="text-lg font-mono focus:outline-none dark:bg-gray-600"></textarea>
-
+                        ws-var="Editor" ws-oninput="EditorOnInput" ws-onkeyup="EditorOnKeyUp"
+                        ws-onclick="EditorOnClick" ws-onscroll="EditorOnScroll" ws-onkeydown="EditorOnKeyDown"
+                        style="width:33%;overflow-x:auto;overflow-wrap:normal;text-wrap:nowrap;line-height:normal;font-weight:bold;" placeholder="<type your code here>"
+                        class="text-lg font-mono focus:outline-none dark:bg-gray-600"></textarea>
             <div class="splitter"></div>
             <!-- Adjustments inside the flex-1 container on the right side of the main panel -->
             <div class="flex flex-col flex-1 focus:outline-none bg-white">
@@ -158,7 +204,7 @@
                 <!-- This div becomes a flex container itself -->
                 <div style="flex-grow: 1; display: flex; flex-direction: column;">
                     <!-- Ensure the textarea can grow to fill the space and does not overflow -->
-                    <textarea ws-var="Console" class="font-mono text-sm focus:outline-none dark:bg-gray-600" style="flex-grow: 1; overflow-auto;"></textarea>
+                    <textarea ws-var="Console" style="line-height:1;" class="font-mono text-sm focus:outline-none dark:bg-gray-600" style="flex-grow: 1; overflow-auto;"></textarea>
                 </div>
             </div>
         </div>
@@ -174,6 +220,15 @@
             <a class="text-blue-500 hover:text-blue-800" href="https://websharper.com">WebSharper</a>
         </div>
     </footer>
+    <div id="popupOverlay" class="popup-overlay">
+        <div class="popup-box">
+            <p>You are about to lose your changes, do you want to proceed?</p>
+            <div class="popup-buttons">
+                <button ws-onclick="AcceptAbandoningChanges" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">OK</button>
+                <button ws-onclick="CancelAbandoningChanges" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
     <script>
         // JavaScript for toggling the drawer and overlay
         document.getElementById('hamburger').addEventListener('click', function () {

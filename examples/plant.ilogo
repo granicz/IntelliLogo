@@ -1,16 +1,16 @@
 ; Adapted from:
-; http://fmslogo.sourceforge.net/workshop/fractals.shtml 
+; https://fmslogo.sourceforge.net/workshop/fractals.shtml 
 
 TO PLANT :SIZE :ANGLE
-   IF :SIZE < 1 [ STOP() ] 
+  IF :SIZE < 1 [ STOP() ] 
 
-   RIGHT :ANGLE
-   FORWARD :SIZE
-   REPEAT 4 [
-     PLANT (:SIZE / 2 DIFFERENCE (RANDOM 160 80))
-   ]
-   BACK :SIZE
-   LEFT :ANGLE
+  RIGHT :ANGLE
+  FORWARD :SIZE
+  REPEAT 4 [
+    PLANT (:SIZE / 2 DIFFERENCE (RANDOM 160 80))
+  ]
+  BACK :SIZE
+  LEFT :ANGLE
 END
  
 PLANT (100 0)

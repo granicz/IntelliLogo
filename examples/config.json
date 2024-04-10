@@ -3,7 +3,11 @@
       {
         "name": "Snowflake",
         "filename" : "snowflake.ilogo"
-      }
+      },
+      {
+        "name": "Fern",
+        "filename" : "fern.ilogo"
+      },
       {
         "name": "Rose petals",
         "filename" : "rose-petals.ilogo"
@@ -11,15 +15,18 @@
       {
         "name": "Plant",
         "filename" : "plant.ilogo"
-      }
+      },
       {
         "name": "Curly fractal",
         "filename" : "curly-fractal.ilogo"
-      }
+      },
       {
         "name": "Triangle fractal",
         "filename" : "triangle-fractal.ilogo"
+      },
+      {
+        "name": "Square fractal",
+        "filename" : "square-fractal.ilogo"
       }
     ]
-  }
 }

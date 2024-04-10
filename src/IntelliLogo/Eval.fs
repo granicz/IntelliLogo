@@ -27,8 +27,6 @@ module Parse =
 module Evaluator =
     open AST
 
-    exception StopEvaluation of pos
-
     type Value =
         | Nothing
         | Number of float
@@ -37,24 +35,49 @@ module Evaluator =
         | List of Value list
         | Explicit of Value
 
+    exception ArgumentTypeMismatch of f:string * v1:Value * v2:Value * pos
+    exception ResultTypeMismatch of f:string * v:Value * pos
+    exception UnexpectedArgument of f:string * args: Value list * pos
+    exception NumberExpectedButGot of v:Value list * pos
+    exception BooleanExpected of v:Value * pos
+    exception FunctionArityMismatch of f:string * int * pos
+    exception UndefinedFunction of f:string * pos
+    exception UndefinedVariable of v:string * pos
+    exception UninitializedLocalVariable of v:string * pos
+    exception StringConversionErrorList of Value * pos
+    exception StringConversionErrorNothing of Value * pos
+
     type Environment =
         {
-            Variables: Map<string, Value>
+            GlobalVariables: Map<string, Value>
+            LocalVariables: Map<string, Value option>
             Functions: Map<string, (string list * Commands)>
-            BuiltIns: Map<string, (Environment -> pos -> Value list -> (Environment * Value))>
+            BuiltIns: Map<string, (Environment -> pos -> Value list -> ((Environment * Value) * bool))>
         }
 
     [<AutoOpen>]
     module Pervasives =
-        let rec ValueToString = function
+        type List<'a> with
+            static member foldUntil f init list =
+                let rec loop acc list =
+                    match list with
+                    | [] -> (acc, false)
+                    | x::xs ->
+                        let (newAcc, isStopped) = f acc x
+                        if isStopped then (newAcc, true)
+                        else loop newAcc xs
+                loop init list
+
+        let rec ValueToString pos v =
+            match v with
             | Value.Boolean b ->
                 string b
             | Value.Explicit exp ->
-                ValueToString exp
+                ValueToString pos exp
             | Value.List lst ->
-                failwithf "Unexpected value: <List>"
+                raise (StringConversionErrorList(v, pos))
             | Value.Nothing ->
-                failwithf "Unexpected value: <Nothing>"
+                raise (StringConversionErrorNothing(v, pos))
             | Value.Number n ->
                 string n
             | Value.Text t ->
@@ -63,44 +86,56 @@ module Evaluator =
     module Builtins =
         let rnd = System.Random()
         // Remember to add functions with lowercase names
-        let Core : (string * (Environment -> pos -> Value list -> (Environment * Value))) list = [
+        let Core : (string * (Environment -> pos -> Value list -> ((Environment * Value) * bool))) list = [
             "debug_environment", (fun env _ args ->
                 printfn "DEBUG ENV = %A" env
-                env, Value.Nothing
+                (env, Value.Nothing), false
             )
             "difference", (fun env pos args ->
                 match args with
                 | [Number n1; Number n2] ->
-                    env, Value.Number(n1-n2)
+                    (env, Value.Number(n1-n2)), false
                 | _ ->
-                    failwithf "Unexpected argument(s) to difference at %A: %A" pos args
+                    raise (UnexpectedArgument ("difference", args, pos))
             )
             "random", (fun env pos args ->
                 match args with
                 | [Number n] ->
-                    env, Value.Number(rnd.Next(int(n)))
+                    (env, Value.Number(rnd.Next(int(n)))), false
                 | _ ->
-                    failwithf "Unexpected argument(s) to random at %A: %A" pos args
+                    raise (UnexpectedArgument ("random", args, pos))
             )
-            "sentence", (fun env _ args ->
-                env, args |> Seq.map ValueToString |> String.concat " " |> Value.Text
+            "sentence", (fun env pos args ->
+                (env,
+                    args
+                    |> Seq.map (ValueToString pos)
+                    |> String.concat " "
+                    |> Value.Text),
+                        false
             )
-            "stop", (fun _ pos args ->
+            "stop", (fun env pos args ->
                 match args with
                 | [] ->
-                    raise (StopEvaluation pos)
+                    // Stop the execution of the current user-defined function
+                    (env, Value.Nothing), true
                 | _ ->
-                    failwithf "Unexpected argument(s) to stop at %A: %A" pos args
+                    raise (UnexpectedArgument ("stop", args, pos))
             )
-            "word", (fun env _ args ->
-                env, args |> Seq.map ValueToString |> String.concat "" |> Value.Text
+            "word", (fun env pos args ->
+                (env,
+                    args
+                    |> Seq.map (ValueToString pos)
+                    |> String.concat ""
+                    |> Value.Text),
+                        false
             )
         ]
 
     type Environment with
         static member Create() =
             {
-                Variables = Map.empty
+                GlobalVariables = Map.empty
+                LocalVariables = Map.empty
                 Functions = Map.empty
                 BuiltIns = Builtins.Core |> Map.ofList
             }
@@ -110,81 +145,94 @@ module Evaluator =
                 Functions = Map.add f (pars, body) this.Functions
             }
 
-        member this.AddVariable(v, value) =
+        member this.AddGlobalVariable(v, value) =
             { this with
-                Variables = Map.add v value this.Variables
+                GlobalVariables = Map.add v value this.GlobalVariables
             }
 
-    let rec evalCommands (env: Environment) commands =
+        member this.AddLocalVariable(v, value) =
+            { this with
+                LocalVariables = Map.add v value this.LocalVariables
+            }
+
+        member this.PreserveGlobalStateFrom(env: Environment) =
+            { this with
+                GlobalVariables = env.GlobalVariables
+            }
+
+    let rec evalCommands (env: Environment) commands : ((Environment * Value) * bool)=
         commands
-        |> List.fold (fun (env, _) stmt ->
+        |> List.foldUntil (fun (env, v) stmt ->
             evalStatement env stmt
         ) (env, Value.Nothing)
 
-    // Functions and variables have global scope, once
+    // Evaluates a list of commands, assuming that they can only
+    // return a value via OUTPUT.
+    and evalStatementCommands env body =
+        let (env, v), isStopped = evalCommands env body
+        match v with
+        | Value.Explicit v ->
+            (env, v), isStopped
+        | _ ->
+            (env, Value.Nothing), isStopped
+
+    // Functions and global variables have global scope, once
     // they appear, they are visible for the rest of the program.
-    // Function parameters are local.
-    and evalStatement (env: Environment) = function
+    // Function parameters and local variables are local.
+    and evalStatement (env: Environment) stmt : (Environment * Value) * bool =
+        match stmt with
         | Statement.FunDef((f, fpos), pars, body, pos) ->
-            env.AddFunction(f.ToLower(), List.map fst pars, body), Value.Nothing
+            (env.AddFunction(f.ToLower(), List.map fst pars, body),
+                Value.Nothing), false
         // A repeat statement doesn't produce a return value.
         | Statement.Repeat(e, body, pos) ->
             let env, v = evalExpr env e
             match v with
             | Value.Number n ->
-                let env, _ =
-                    [1 .. (int) n]
-                    |> List.fold (fun (env: Environment, _) i ->
-                        let env = env.AddVariable("repcount", Value.Number i)
-                        evalCommands env body
-                    ) (env, Value.Nothing)
-                env, Value.Nothing
+                [1 .. (int) n]
+                |> List.foldUntil (fun (env: Environment, _) i ->
+                    let env = env.AddLocalVariable("repcount", Some (Value.Number i))
+                    evalCommands env body
+                ) (env, Value.Nothing)
             | _ ->
-                failwithf "Number expected for loop count, got {%A}" v
+                raise (NumberExpectedButGot([v], pos))
         // An IF or IFELSE can return a value via OUTPUT.
         | Statement.If(cond, yes, pos) ->
             let env, v = evalExpr env cond
             match v with
             | Value.Boolean b ->
                 if b then
-                    let env, v = evalCommands env yes
-                    match v with
-                    | Value.Explicit v ->
-                        env, v
-                    | _ ->
-                        env, Value.Nothing
+                    evalStatementCommands env yes
                 else
-                    env, Value.Nothing
+                    (env, Value.Nothing), false
             | _ ->
-                failwithf "Boolean expected for condition, got {%A}" v
+                raise (BooleanExpected (v, pos))
         | Statement.IfElse(cond, yes, no, pos) ->
             let env, v = evalExpr env cond
             match v with
             | Value.Boolean b ->
                 if b then
-                    let env, v = evalCommands env yes
-                    match v with
-                    | Value.Explicit v ->
-                        env, v
-                    | _ ->
-                        env, Value.Nothing
+                    evalStatementCommands env yes
                 else
-                    let env, v = evalCommands env no
-                    match v with
-                    | Value.Explicit v ->
-                        env, v
-                    | _ ->
-                        env, Value.Nothing
+                    evalStatementCommands env no
             | _ ->
-                failwithf "Boolean expected for condition, got {%A}" v
+                raise (BooleanExpected (v, pos))
         | Statement.Make((v, _), e, pos) ->
             let env, value = evalExpr env e
-            env.AddVariable(v.ToLower(), value), Value.Nothing
+            if env.LocalVariables.ContainsKey(v.ToLower()) then
+                (env.AddLocalVariable(v.ToLower(), Some value), Value.Nothing), false
+            else
+                (env.AddGlobalVariable(v.ToLower(), value), Value.Nothing), false
+        | Statement.MakeLocal((v, _), e, pos) ->
+            let env, value = evalExpr env e
+            (env.AddLocalVariable(v.ToLower(), Some value), Value.Nothing), false
+        | Statement.Local((v, _), pos) ->
+            (env.AddLocalVariable(v.ToLower(), None), Value.Nothing), false
         | Statement.FunCall((f, fpos), args, pos) ->
             evalFunCall env ((f, fpos), args, pos)
         | Statement.Output(e, pos) ->
             let env, v = evalExpr env e
-            env, Value.Explicit v
+            (env, Value.Explicit v), false
 
     and evalFunCall env ((f, fpos), args, pos) =
         // Is this a user-defined function?
@@ -192,24 +240,18 @@ module Evaluator =
             let pars, body = env.Functions.Item (f.ToLower())
             let argc = List.length args
             if argc <> List.length pars then
-                failwithf "%s doesn't like %d inputs" f argc
+                raise (FunctionArityMismatch(f, argc, pos))
             let env' =
                 args |> List.fold2 (fun (env: Environment) (par: string) arg ->
                     let env, v = evalExpr env arg
-                    env.AddVariable(par.ToLower(), v)
+                    env.AddLocalVariable(par.ToLower(), Some v)
                 ) env pars
-            try
-                let env', v = evalCommands env' body
-                // Return old environment and the result
-                match v with
-                | Value.Explicit v ->
-                    env, v
-                | v ->
-                    env, v
-            with
-            // If we encounter a "stop" command, we exit
-            | StopEvaluation pos ->
-                env, Value.Nothing
+            let (env', v), isStopped = evalCommands env' body
+            // Return old environment + global updates and the result.
+            match v with
+            | Value.Explicit v
+            | v ->
+                (env.PreserveGlobalStateFrom(env'), v), false
         // Is it a built-in function?
         elif env.BuiltIns.ContainsKey (f.ToLower()) then
             let ff = env.BuiltIns.Item (f.ToLower())
@@ -221,23 +263,32 @@ module Evaluator =
                 ) (env, [])
                 |> fun (env, args) ->
                     env, List.rev args
-            let env, v = ff env fpos args
+            let (env, v), isStopped = ff env fpos args
             // Return the result, flattening Explicits
             match v with
-            | Value.Explicit v ->
-                env, v
+            | Value.Explicit v
             | v ->
-                env, v
+                // We don't litter up the environment,
+                // nor is there anything we want to carry
+                // over from there.
+                (env, v), isStopped
         else
-            failwithf "I don't know how to %s, at %A" f fpos
+            raise (UndefinedFunction(f, fpos))
 
+    // Expressions can't contain STOP
     and evalExpr env = function
         | Var (v, pos) ->
-            match Map.tryFind (v.ToLower()) env.Variables with
+            match Map.tryFind (v.ToLower()) env.GlobalVariables with
             | Some value ->
                 env, value
             | None ->
-                failwithf "Undefined variable: %s at %A" v pos
+                match Map.tryFind (v.ToLower()) env.LocalVariables with
+                | Some (Some value) ->
+                    env, value
+                | Some None ->
+                    raise (UninitializedLocalVariable(v, pos))
+                | None ->
+                    raise (UndefinedVariable(v, pos))
         | Expr.Number (n, _) ->
             env, Value.Number n
         | Word (w, _) ->
@@ -245,7 +296,8 @@ module Evaluator =
         | Expr.Text (txt, _) ->
             env, Value.Text txt
         | FunCall ((f, fpos), args, pos) ->
-            evalFunCall env ((f, fpos), args, pos)
+            let (env, v), _ = evalFunCall env ((f, fpos), args, pos)
+            env, v
         | Expr.List (es, pos) ->
             es
             |> List.fold (fun (env, lst) e ->
@@ -260,7 +312,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Number (n1+n2)
             | _ ->
-                failwithf "Type mismatch in (+), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(+)", v1, v2, pos))
         | Expr.Sub (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -268,7 +320,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Number (n1-n2)
             | _ ->
-                failwithf "Type mismatch in (-), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(-)", v1, v2, pos))
         | Expr.Mul (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -276,7 +328,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Number (n1*n2)
             | _ ->
-                failwithf "Type mismatch in (*), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(*)", v1, v2, pos))
         | Expr.Div (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -284,7 +336,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Number (n1/n2)
             | _ ->
-                failwithf "Type mismatch in (/), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(/)", v1, v2, pos))
         | Expr.Eq (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -306,14 +358,14 @@ module Evaluator =
                         false
                 env, Value.Boolean(leq l1 l2)
             | _ ->
-                failwithf "Type mismatch in (=|<>), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(=|<>)", v1, v2, pos))
         | Expr.NotEq (e1, e2, pos) ->
             let env, v = evalExpr env (Expr.Eq(e1, e2, pos))
             match v with
             | Value.Boolean b ->
                 env, Value.Boolean(not b)
             | v ->
-                failwithf "Unexpected value in (<>), got {%A}" v
+                raise (ResultTypeMismatch ("(<>)", v, pos))
         | Expr.Gt (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -321,7 +373,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Boolean (n1>n2)
             | _ ->
-                failwithf "Type mismatch in (>), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(>)", v1, v2, pos))
         | Expr.Ge (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -329,7 +381,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Boolean (n1>=n2)
             | _ ->
-                failwithf "Type mismatch in (>=), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(>=)", v1, v2, pos))
         | Expr.Lt (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -337,7 +389,7 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Boolean (n1<n2)
             | _ ->
-                failwithf "Type mismatch in (<), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(<)", v1, v2, pos))
         | Expr.Le (e1, e2, pos) ->
             let env, v1 = evalExpr env e1
             let env, v2 = evalExpr env e2
@@ -345,4 +397,4 @@ module Evaluator =
             | Value.Number n1, Value.Number n2 ->
                 env, Value.Boolean (n1<=n2)
             | _ ->
-                failwithf "Type mismatch in (<=), got {%A} and {%A}" v1 v2
+                raise (ArgumentTypeMismatch ("(<=)", v1, v2, pos))
