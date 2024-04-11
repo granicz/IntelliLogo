@@ -18,6 +18,16 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
+
+      - name: Add GitHub registry NuGet source
+        run: 
+          dotnet nuget 
+            add source https://nuget.pkg.github.com/dotnet-websharper/index.json 
+            --name github 
+            --username granicz 
+            --password ${{ secrets.INTELLILOGOCI }} 
+            --store-password-in-clear-text
+
       - run: npm install
         working-directory: src/client
       - run: dotnet build
