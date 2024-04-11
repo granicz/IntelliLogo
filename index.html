@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliLogo</title>
+    
+    <style>.splitter{background-color:#eee;cursor:ew-resize;width:7px}.splitter:hover{background-color:#ddd}.splitter-v{background-color:#eee;cursor:ns-resize;height:7px}.splitter-v:hover{background-color:#ddd}.textarea{height:100%;padding:8px;resize:none;width:100%}.flex-1{display:flex;flex-direction:column}.main-panel{display:flex;flex-direction:row;flex-grow:1}#drawer{background-color:#fff;bottom:0;box-shadow:4px 0 5px rgba(0,0,0,.2);left:0;position:fixed;top:0;transform:translateX(-100%);transition:transform .25s ease;width:250px;z-index:50}#drawer.open{transform:translateX(0)}.menu-overlay{background:rgba(0,0,0,.4);display:none;height:100%;left:0;position:fixed;top:0;width:100%;z-index:40}.menu-overlay.visible{display:block}.popup-overlay{align-items:center;background-color:rgba(0,0,0,.5);display:none;height:100%;justify-content:center;left:0;position:fixed;top:0;width:100%;z-index:1000}.popup-box{align-items:center;background-color:#fff;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,.5);display:flex;flex-direction:column;padding:20px}.popup-buttons{margin-top:20px}@keyframes progressbar{0%,to{background-size:0 100%}99.9%{background-size:100% 100%}}.animate-progressbar{animation:progressbar 1s linear infinite;background:linear-gradient(90deg,#ccc 0,#aaa);background-repeat:no-repeat;background-size:0 100%}</style>
+  <script type="module" crossorigin src="/assets/index-e9bd728b.js"></script>
+  <link rel="stylesheet" href="/assets/index-2e178e71.css">
+</head>
+<body class="flex flex-col h-screen m-0 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div ws-onafterrender="OAR" class="flex-1 overflow-hidden">
+        <div class="dark:bg-gray-900 flex justify-between w-full items-center p-2 bg-gray-200">
+            <!-- Links Menu (hidden by default, shown in mobile mode) -->
+            <!-- Drawer Menu -->
+            <div id="drawer">
+                <a href="#" class="block p-4 text-sm text-gray-700">
+                    Link 1
+                </a>
+                <a href="#" class="block p-4 text-sm text-gray-700">
+                    Link 2
+                </a>
+            </div>
+
+            <!-- Overlay -->
+            <div id="overlay" class="menu-overlay"></div>
+
+            <!-- <div class="flex-1 flex w-max p-4 items-center">-->
+
+            <div class="flex">
+                <!-- Hamburger Icon -->
+                <button id="hamburger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+                <h2 class="text-2xl font-bold ml-2 mr-8 hidden lg:block">IntelliLogo</h2>
+            </div>
+
+            <div class="flex justify-center">
+                <div class="font-bold relative inline-block text-gray-700 mr-4">
+                    <select ws-var="Examples" ws-onchange="ExampleChanged" ws-anchor="ExamplesNode"
+                            class="block appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" id="styledSelect">
+                        <option value="" disabled selected>Select example...</option>
+                        <option ws-replace="ExampleOptions"></option>
+                    </select>
+                    <!-- Position the SVG arrow correctly within the same relative div as the select -->
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button ws-onclick="OnRun" title="Alt+R" id="playButton" class="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 active:bg-green-800 text-white font-bold py-1 px-2 text-lg rounded outline-none focus:outline-none mr-2 w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-4.707-4.707A1 1 0 008.586 7v10a1 1 0 001.414 1.414l4.707-4.707a1 1 0 000-1.414z" />
+                    </svg>
+                    Run
+                </button>
+
+                <button ws-onclick="ThemeToggle" class="ml-auto">
+                    <svg style="width:32px;height:32px;" class="w-5 h-5"
+                         aria-hidden="true"
+                         fill="currentColor"
+                         viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                              clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-panel flex flex-1 overflow-hidden">
+            <textarea ws-anchor="EditorNode"
+                        ws-var="Editor" ws-oninput="EditorOnInput" ws-onkeyup="EditorOnKeyUp"
+                        ws-onclick="EditorOnClick" ws-onscroll="EditorOnScroll" ws-onkeydown="EditorOnKeyDown"
+                        style="width:33%;overflow-x:auto;overflow-wrap:normal;text-wrap:nowrap;line-height:normal;font-weight:bold;" placeholder="<type your code here>"
+                        class="textarea text-lg font-mono focus:outline-none dark:bg-gray-600"></textarea>
+            <div class="splitter"></div>
+            <!-- Adjustments inside the flex-1 container on the right side of the main panel -->
+            <div class="flex flex-col flex-1 focus:outline-none bg-white">
+                <canvas ws-anchor="Canvas" width="1024" height="1024" style="width:100%;height:75%;flex-shrink:0;"></canvas>
+                <div class="splitter-v"></div>
+                <!-- This div becomes a flex container itself -->
+                <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <!-- Ensure the textarea can grow to fill the space and does not overflow -->
+                    <textarea ws-var="Console" style="line-height:1;" class="textarea font-mono text-sm focus:outline-none dark:bg-gray-600" style="flex-grow: 1; overflow-auto;"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-200 dark:bg-gray-900 text-lg p-2 flex flex-row justify-between items-center w-full">
+        <div id="caretPos" class="text-left pl-4">Row: ${EditorRow}, Col: ${EditorCol}</div>
+        <div class="item-center hidden md:block">
+            © 2024 <a class="text-blue-500 hover:text-blue-800" href="https://github.com/granicz">Adam Granicz</a>,
+            <a class="text-blue-500 hover:text-blue-800" href="https://intellifactory.com">IntelliFactory</a> |
+            Made with <span style="color: red;font-size:x-large;vertical-align:bottom">&hearts;</span> in F# with
+            <a class="text-blue-500 hover:text-blue-800" href="https://websharper.com">WebSharper</a>
+        </div>
+    </footer>
+    <div id="popupOverlay" class="popup-overlay">
+        <div class="popup-box">
+            <p>You are about to lose your changes, do you want to proceed?</p>
+            <div class="popup-buttons">
+                <button ws-onclick="AcceptAbandoningChanges" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">OK</button>
+                <button ws-onclick="CancelAbandoningChanges" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // JavaScript for toggling the drawer and overlay
+        document.getElementById('hamburger').addEventListener('click', function () {
+            document.getElementById('drawer').classList.remove('hidden');
+            document.getElementById('drawer').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('visible');
+        });
+
+        // Close drawer when overlay is clicked
+        document.getElementById('overlay').addEventListener('click', function () {
+            this.classList.remove('visible');
+            document.getElementById('drawer').classList.remove('open');
+        });
+    </script>
+    <script>
+        document.addEventListener('keydown', function (event) {
+            // Check if Alt key and 'R' key are pressed together
+            if (event.altKey && event.key === 'r') {
+                // Prevent the default action to avoid any conflict
+                event.preventDefault();
+
+                // Trigger the click event on the "Run" button
+                document.getElementById('playButton').click();
+            }
+        });
+    </script>
+    
+    
+</body>
+</html>

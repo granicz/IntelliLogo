@@ -1,0 +1,29 @@
+; Adapted from:
+; https://fmslogo.sourceforge.net/workshop/fractals.shtml 
+
+TO SNOWFLAKE.SIDE :LENGTH :DEPTH
+
+  IF :DEPTH = 0 [
+    FORWARD :LENGTH
+    STOP ()
+  ]
+
+  SNOWFLAKE.SIDE (:LENGTH  / 3 :DEPTH - 1)
+
+  LEFT    60
+  SNOWFLAKE.SIDE (:LENGTH  / 3 :DEPTH - 1)
+  RIGHT   120
+  SNOWFLAKE.SIDE (:LENGTH  / 3 :DEPTH - 1)
+  LEFT    60
+
+  SNOWFLAKE.SIDE (:LENGTH  / 3 :DEPTH - 1)
+END
+
+TO SNOWFLAKE :LENGTH :DEPTH
+  REPEAT 3 [
+    SNOWFLAKE.SIDE (:LENGTH :DEPTH)
+    RIGHT 120
+  ]
+END
+ 
+SNOWFLAKE (200 4)

@@ -1,0 +1,19 @@
+; Adapted from:
+; https://fmslogo.sourceforge.net/workshop/fractals.shtml
+
+TO SQUARE.FRACTAL :LENGTH :DEPTH
+
+  ; base case: no more squares
+  IF :DEPTH = 0 [ STOP() ]
+
+  ; recursive case: draw a square such that each corner
+  ; of the square has SQUARE.FRACTAL in it.
+  REPEAT 4 [
+    FORWARD :LENGTH
+    RIGHT   90
+    SQUARE.FRACTAL (:LENGTH * 0.4 :DEPTH - 1)
+  ]
+
+END
+
+SQUARE.FRACTAL (200 4)

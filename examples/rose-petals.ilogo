@@ -1,0 +1,16 @@
+; Adapted from:
+; https://fmslogo.sourceforge.net/workshop/fractals.shtml 
+
+TO DRAW_CIRCLE :RADIUS
+  REPEAT 360 [FD :RADIUS RT 1]
+END
+
+TO DRAW_FLOWER :PETALS :RADIUS
+  REPEAT :PETALS [
+    DRAW_CIRCLE :RADIUS
+    RT 360 / :PETALS
+  ]
+END
+
+; Now, draw a flower with 12 petals and a radius of 2 for each circle
+DRAW_FLOWER (12 2)
