@@ -25,7 +25,7 @@
                 background-color: #ddd;
             }
 
-        textarea {
+        .textarea {
             resize: none;
             padding: 8px;
             width: 100%;
@@ -195,7 +195,7 @@
                         ws-var="Editor" ws-oninput="EditorOnInput" ws-onkeyup="EditorOnKeyUp"
                         ws-onclick="EditorOnClick" ws-onscroll="EditorOnScroll" ws-onkeydown="EditorOnKeyDown"
                         style="width:33%;overflow-x:auto;overflow-wrap:normal;text-wrap:nowrap;line-height:normal;font-weight:bold;" placeholder="<type your code here>"
-                        class="text-lg font-mono focus:outline-none dark:bg-gray-600"></textarea>
+                        class="textarea text-lg font-mono focus:outline-none dark:bg-gray-600"></textarea>
             <div class="splitter"></div>
             <!-- Adjustments inside the flex-1 container on the right side of the main panel -->
             <div class="flex flex-col flex-1 focus:outline-none bg-white">
@@ -204,7 +204,7 @@
                 <!-- This div becomes a flex container itself -->
                 <div style="flex-grow: 1; display: flex; flex-direction: column;">
                     <!-- Ensure the textarea can grow to fill the space and does not overflow -->
-                    <textarea ws-var="Console" style="line-height:1;" class="font-mono text-sm focus:outline-none dark:bg-gray-600" style="flex-grow: 1; overflow-auto;"></textarea>
+                    <textarea ws-var="Console" style="line-height:1;" class="textarea font-mono text-sm focus:outline-none dark:bg-gray-600" style="flex-grow: 1; overflow-auto;"></textarea>
                 </div>
             </div>
         </div>
