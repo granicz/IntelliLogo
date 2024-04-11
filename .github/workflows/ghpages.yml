@@ -37,7 +37,7 @@ jobs:
       - run: npm run release
         working-directory: src/client
       - run: cp -r src/client/examples dist/
-      - run: echo "logo.intellifactorylabs.io" > CNAME
+      - run: echo "logo.intellifactorylabs.com" > CNAME
         working-directory: dist
 
       - name: Deploy 🚀
