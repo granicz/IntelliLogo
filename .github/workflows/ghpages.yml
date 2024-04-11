@@ -32,9 +32,9 @@ jobs:
         working-directory: src/client
       - run: dotnet build
         working-directory: src/client
-      - run: npx run build:css
+      - run: npm run build:css
         working-directory: src/client
-      - run: npx run release
+      - run: npm run release
         working-directory: src/client
       - run: cp -r src/client/examples dist/
       - run: echo "logo.intellifactorylabs.io" > CNAME
