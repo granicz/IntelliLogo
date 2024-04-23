@@ -6,7 +6,8 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "build:css": "postcss input.css -o output.css"
+    "build:css": "postcss input.css -o output.css",
+    "release": "vite build"
   },
   "dependencies": {
     "autoprefixer": "^10.4.19",
