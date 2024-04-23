@@ -16,11 +16,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="WebSharper" Version="7.0.6.447-beta5" />
-		<PackageReference Include="WebSharper.FSharp" Version="7.0.6.447-beta5" />
-		<PackageReference Include="WebSharper.FsLexYacc" Version="7.0.0.447-beta5" />
-		<PackageReference Include="WebSharper.MathJS" Version="7.0.6.447-beta5" />
-		<PackageReference Include="WebSharper.UI" Version="7.0.4.447-beta5" />
+		<PackageReference Include="WebSharper" Version="7.0.6.454-beta5" />
+		<PackageReference Include="WebSharper.FSharp" Version="7.0.6.454-beta5" />
+		<PackageReference Include="WebSharper.FsLexYacc" Version="7.0.0.454-beta5" />
+		<PackageReference Include="WebSharper.MathJS" Version="7.0.6.454-beta5" />
+		<PackageReference Include="WebSharper.UI" Version="7.0.4.454-beta5" />
 	</ItemGroup>
 
 	<ItemGroup>
