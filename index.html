@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IntelliLogo</title>
     
-    <style>.splitter{background-color:#eee;cursor:ew-resize;width:7px}.splitter:hover{background-color:#ddd}.splitter-v{background-color:#eee;cursor:ns-resize;height:7px}.splitter-v:hover{background-color:#ddd}.textarea{height:100%;padding:8px;resize:none;width:100%}.flex-1{display:flex;flex-direction:column}.main-panel{display:flex;flex-direction:row;flex-grow:1}#drawer{background-color:#fff;bottom:0;box-shadow:4px 0 5px rgba(0,0,0,.2);left:0;position:fixed;top:0;transform:translateX(-100%);transition:transform .25s ease;width:250px;z-index:50}#drawer.open{transform:translateX(0)}.menu-overlay{background:rgba(0,0,0,.4);display:none;height:100%;left:0;position:fixed;top:0;width:100%;z-index:40}.menu-overlay.visible{display:block}.popup-overlay{align-items:center;background-color:rgba(0,0,0,.5);display:none;height:100%;justify-content:center;left:0;position:fixed;top:0;width:100%;z-index:1000}.popup-box{align-items:center;background-color:#fff;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,.5);display:flex;flex-direction:column;padding:20px}.popup-buttons{margin-top:20px}@keyframes progressbar{0%,to{background-size:0 100%}99.9%{background-size:100% 100%}}.animate-progressbar{animation:progressbar 1s linear infinite;background:linear-gradient(90deg,#ccc 0,#aaa);background-repeat:no-repeat;background-size:0 100%}</style>
-  <script type="module" crossorigin src="/assets/index-c400c22a.js"></script>
+    <style>.splitter{background-color:#eee;cursor:ew-resize;width:7px}.splitter:hover{background-color:#ddd}.splitter-v{background-color:#eee;cursor:ns-resize;height:7px}.splitter-v:hover{background-color:#ddd}.textarea{height:100%;padding:8px;resize:none;width:100%}.flex-1{display:flex;flex-direction:column}.main-panel{display:flex;flex-direction:row;flex-grow:1}#drawer{background-color:#fff;bottom:0;box-shadow:4px 0 5px rgba(0,0,0,.2);left:0;position:fixed;top:0;transform:translateX(-100%);transition:transform .25s ease;width:250px;z-index:50}#drawer.open{transform:translateX(0)}.menu-overlay{background:rgba(0,0,0,.4);display:none;height:100%;left:0;position:fixed;top:0;width:100%;z-index:40}.menu-overlay.visible{display:block}.popup-overlay{align-items:center;background-color:rgba(0,0,0,.5);display:none;height:100%;justify-content:center;left:0;position:fixed;top:0;width:100%;z-index:1000}.popup-box{align-items:center;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,.5);display:flex;flex-direction:column;padding:20px}.popup-buttons{margin-top:20px}@keyframes progressbar{0%,to{background-size:0 100%}99.9%{background-size:100% 100%}}.animate-progressbar{animation:progressbar 1s linear infinite;background:linear-gradient(90deg,#ccc 0,#aaa);background-repeat:no-repeat;background-size:0 100%}</style>
+  <script type="module" crossorigin src="/assets/index-c2ebab01.js"></script>
   <link rel="stylesheet" href="/assets/index-36eaf6bc.css">
 </head>
 <body class="flex flex-col h-screen m-0 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -108,8 +108,8 @@
             <div class="splitter"></div>
             <!-- Adjustments inside the flex-1 container on the right side of the main panel -->
             <div style="width:66%" class="flex flex-col flex-1 focus:outline-none bg-white">
-                <div style="overflow: auto; height: 75%; width: 100%;background-color:#f0f0f0;justify-content:center;align-items:center;">
-                    <canvas ws-anchor="Canvas" width="1024" height="1024" style="background-color:white;flex-shrink:0;border:1px solid #ccc;"></canvas>
+                <div class="flex" style="overflow: auto; height: 75%; width: 100%;background-color:#f0f0f0;justify-content:center;align-items:center;">
+                    <canvas ws-anchor="Canvas" width="1024" height="1024" style="margin:auto;background-color:white;flex-shrink:0;border:1px solid #ccc;"></canvas>
                 </div>
                 <div class="splitter-v"></div>
                 <!-- This div becomes a flex container itself -->
@@ -132,7 +132,7 @@
         </div>
     </footer>
     <div id="popupOverlay" class="popup-overlay">
-        <div class="popup-box">
+        <div class="popup-box bg-white dark:bg-gray-600">
             <p>You are about to lose your changes, do you want to proceed?</p>
             <div class="popup-buttons">
                 <button ws-onclick="AcceptAbandoningChanges" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">OK</button>
