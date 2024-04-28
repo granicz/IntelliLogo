@@ -39,6 +39,8 @@ let id lexbuf (s: string) =
         TO (pos.ofToken lexbuf)
     | s when s.ToLower()="repeat" ->
         REPEAT (pos.ofToken lexbuf)
+    | s when s.ToLower()="for" ->
+        FOR (pos.ofToken lexbuf)
     | s when s.ToLower()="if" ->
         IF (pos.ofToken lexbuf)
     | s when s.ToLower()="ifelse" ->
@@ -53,6 +55,8 @@ let id lexbuf (s: string) =
         END (pos.ofToken lexbuf)
     | s when s.ToLower()="output" ->
         OUTPUT (pos.ofToken lexbuf)
+    | s when s.ToLower()="repcount" ->
+        REPCOUNT (pos.ofToken lexbuf)
     | s ->
         ID (s, pos.ofToken lexbuf)
 

@@ -13,6 +13,7 @@ open Microsoft.FSharp.Core.ExtraTopLevelOperators
 
 %token <pos> TO
 %token <pos> REPEAT
+%token <pos> FOR
 %token <pos> IF
 %token <pos> IFELSE
 %token <pos> MAKE
@@ -20,6 +21,7 @@ open Microsoft.FSharp.Core.ExtraTopLevelOperators
 %token <pos> LOCAL
 %token <pos> END
 %token <pos> OUTPUT
+%token <pos> REPCOUNT
 
 %token <pos> PLUS
 %token <pos> MINUS
@@ -69,6 +71,14 @@ statement:
     | REPEAT expr commands {
         let pos = pos.union $1 (snd $3)
         Repeat (fst $2, fst $3, pos), pos
+    }
+    | FOR LBRACK ID expr expr RBRACK commands {
+        let pos = pos.union $1 (snd $7)
+        For ($3, fst $4, fst $5, None, fst $7, pos), pos
+    }
+    | FOR LBRACK ID expr expr expr RBRACK commands {
+        let pos = pos.union $1 (snd $8)
+        For ($3, fst $4, fst $5, Some (fst $6), fst $8, pos), pos
     }
     | IF expr commands {
         let pos = pos.union $1 (snd $3)
@@ -149,6 +159,9 @@ simple_expr:
     }
     | STRING {
         Text (fst $1, snd $1), snd $1
+    }
+    | REPCOUNT {
+        RepCount $1, $1
     }
 
 expr:

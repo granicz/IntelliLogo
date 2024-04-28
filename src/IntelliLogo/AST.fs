@@ -56,6 +56,7 @@ module AST =
     and Statement =
         | FunDef of id * id list * Commands * pos
         | Repeat of Expr * Commands * pos
+        | For of id * Expr * Expr * Expr option * Commands * pos
         | If of Expr * Commands * pos
         | IfElse of Expr * Commands * Commands * pos
         // make "i 1
@@ -70,6 +71,7 @@ module AST =
         | Output of Expr * pos
 
     and Expr =
+        | RepCount of pos
         | Var of string * pos
         | Number of float * pos
         | Word of string * pos
@@ -89,6 +91,7 @@ module AST =
     with
         member this.Pos =
             match this with
+            | RepCount pos
             | Var (_, pos)
             | Number (_, pos)
             | Word (_, pos)

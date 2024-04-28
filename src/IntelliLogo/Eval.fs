@@ -68,15 +68,53 @@ module Evaluator =
                         else loop newAcc xs
                 loop init list
 
-        let rec ValueToString pos v =
-            match v with
+        type PrintKind =
+            | Show
+            | Print
+            | Type
+
+        let rec ValueToString kind isTop pos = function
             | Value.Boolean b ->
                 string b
             | Value.Explicit exp ->
-                ValueToString pos exp
-            | Value.List lst ->
+                ValueToString kind isTop pos exp
+            | Value.List lst as v ->
+                let inside =
+                    lst
+                    |> List.map (fun v -> ValueToString kind false pos v)
+                    |> List.reduce (fun s1 s2 ->
+                        match kind with
+                        | Print
+                        | Show ->
+                            s1 + " " + s2
+                        | Type ->
+                            s1 + s2
+                    )
+                match kind with
+                | Print
+                | Type ->
+                    if isTop then
+                        inside
+                    else
+                        "[" + inside + "]"
+                | Show ->
+                    inside
+                //raise (StringConversionErrorList(v, pos))
+            | Value.Nothing as v ->
+                raise (StringConversionErrorNothing(v, pos))
+            | Value.Number n ->
+                string n
+            | Value.Text t ->
+                t
+
+        let rec NonListValueToString pos = function
+            | Value.Boolean b ->
+                string b
+            | Value.Explicit exp ->
+                NonListValueToString pos exp
+            | Value.List lst as v ->
                 raise (StringConversionErrorList(v, pos))
-            | Value.Nothing ->
+            | Value.Nothing as v ->
                 raise (StringConversionErrorNothing(v, pos))
             | Value.Number n ->
                 string n
@@ -98,17 +136,39 @@ module Evaluator =
                 | _ ->
                     raise (UnexpectedArgument ("difference", args, pos))
             )
+            "form", (fun env pos args ->
+                match args with
+                | [Number n; Number width; Number dec] ->
+                    let width, dec = int width, int dec
+                    // Convert number to string with fixed decimal places
+                    let multiplier = System.Math.Pow(10.0, float dec)
+                    let rounded = System.Math.Round(n * multiplier) / multiplier
+                    let numStr = rounded.ToString()
+                    // Determine how many characters are taken by the decimal part and the decimal point
+                    let decimalPartLength = if dec > 0 then dec + 1 else 0
+                    // Calculate the total length of the number part
+                    let totalNumLength = numStr.Length
+                    // Calculate necessary padding
+                    let paddingSize = width - totalNumLength
+                    let padding = if paddingSize > 0 then String.replicate paddingSize " " else ""
+                    // Construct the final string
+                    (env, Value.Text (padding + numStr)), false
+                    // The below is supposed to work, but it doesn't
+                    //(env, Value.Text <| sprintf "%*.*f" (int width) (int dec) n), false
+                | _ ->
+                    raise (UnexpectedArgument ("form", args, pos))
+            )
             "random", (fun env pos args ->
                 match args with
                 | [Number n] ->
-                    (env, Value.Number(rnd.Next(int(n)))), false
+                    (env, Value.Number(rnd.Next(int n))), false
                 | _ ->
                     raise (UnexpectedArgument ("random", args, pos))
             )
             "sentence", (fun env pos args ->
                 (env,
                     args
-                    |> Seq.map (ValueToString pos)
+                    |> Seq.map (NonListValueToString pos)
                     |> String.concat " "
                     |> Value.Text),
                         false
@@ -124,7 +184,7 @@ module Evaluator =
             "word", (fun env pos args ->
                 (env,
                     args
-                    |> Seq.map (ValueToString pos)
+                    |> Seq.map (NonListValueToString pos)
                     |> String.concat ""
                     |> Value.Text),
                         false
@@ -196,6 +256,22 @@ module Evaluator =
                 ) (env, Value.Nothing)
             | _ ->
                 raise (NumberExpectedButGot([v], pos))
+        | Statement.For((i, ipos), from, _to, step, body, pos) ->
+            let env', from = evalExpr env from
+            let env', _to = evalExpr env' _to
+            match from with
+            | Number from ->
+                match _to with
+                | Number _to ->
+                    [int from .. int _to]
+                    |> List.foldUntil (fun (env: Environment, _) i ->
+                        let env = env.AddLocalVariable("i", Some (Value.Number i))
+                        evalCommands env body
+                    ) (env, Value.Nothing)
+                | _ ->
+                    raise (NumberExpectedButGot ([_to], pos))
+            | _ ->
+                raise (NumberExpectedButGot ([from], pos))
         // An IF or IFELSE can return a value via OUTPUT.
         | Statement.If(cond, yes, pos) ->
             let env, v = evalExpr env cond
@@ -277,6 +353,8 @@ module Evaluator =
 
     // Expressions can't contain STOP
     and evalExpr env = function
+        | RepCount pos ->
+            evalExpr env (Var ("repcount", pos))
         | Var (v, pos) ->
             match Map.tryFind (v.ToLower()) env.GlobalVariables with
             | Some value ->

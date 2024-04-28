@@ -93,7 +93,6 @@
 
         /* Popup box */
         .popup-box {
-            background-color: white;
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
@@ -223,8 +222,8 @@
             <div class="splitter"></div>
             <!-- Adjustments inside the flex-1 container on the right side of the main panel -->
             <div style="width:66%" class="flex flex-col flex-1 focus:outline-none bg-white">
-                <div style="overflow: auto; height: 75%; width: 100%;background-color:#f0f0f0;justify-content:center;align-items:center;">
-                    <canvas ws-anchor="Canvas" width="1024" height="1024" style="background-color:white;flex-shrink:0;border:1px solid #ccc;"></canvas>
+                <div class="flex" style="overflow: auto; height: 75%; width: 100%;background-color:#f0f0f0;justify-content:center;align-items:center;">
+                    <canvas ws-anchor="Canvas" width="1024" height="1024" style="margin:auto;background-color:white;flex-shrink:0;border:1px solid #ccc;"></canvas>
                 </div>
                 <div class="splitter-v"></div>
                 <!-- This div becomes a flex container itself -->
@@ -247,7 +246,7 @@
         </div>
     </footer>
     <div id="popupOverlay" class="popup-overlay">
-        <div class="popup-box">
+        <div class="popup-box bg-white dark:bg-gray-600">
             <p>You are about to lose your changes, do you want to proceed?</p>
             <div class="popup-buttons">
                 <button ws-onclick="AcceptAbandoningChanges" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">OK</button>

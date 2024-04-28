@@ -138,11 +138,20 @@ module ClientBuiltins =
                 raise (NumberExpectedButGot(args, pos))
             (env, Value.Nothing), false
         )
-        ["print"], (fun env pos args ->
+        ["print"; "pr"], (fun env pos args ->
             args |> List.iter (fun arg ->
-                let s = ValueToString pos arg
+                let s = NonListValueToString pos arg
                 if State.Console.IsSome then
-                    Var.Concat(State.Console.Value, s + "\n")
+                    Var.Concat(State.Console.Value, s + " ")
+            )
+            Var.Concat(State.Console.Value, "\n")
+            (env, Value.Nothing), false
+        )
+        ["type"], (fun env pos args ->
+            args |> List.iter (fun arg ->
+                let s = NonListValueToString pos arg
+                if State.Console.IsSome then
+                    Var.Concat(State.Console.Value, s)
             )
             (env, Value.Nothing), false
         )
