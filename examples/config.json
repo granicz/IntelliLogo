@@ -27,6 +27,10 @@
       {
         "name": "Square fractal",
         "filename" : "square-fractal.ilogo"
+      },
+      {
+        "name": "Multiplication table",
+        "filename" : "multiplication-table.ilogo"
       }
     ]
 }

@@ -1,0 +1,1 @@
+for [i 1 10] [repeat 10 [type form (repcount * :i 4 0)] pr()]
