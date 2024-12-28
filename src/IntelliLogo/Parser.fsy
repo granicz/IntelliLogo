@@ -56,7 +56,7 @@ open Microsoft.FSharp.Core.ExtraTopLevelOperators
 %%
 
 program:
-    | statement_list EOF {
+    | statements EOF {
         fst $1
     }
     | EOF {
@@ -64,7 +64,7 @@ program:
     }
 
 statement:
-    | TO ID var_list_opt statement_list END {
+    | TO ID vars_opt statements END {
         let pos = pos.union $1 $5
         FunDef ($2, $3, fst $4, pos), pos
     }
@@ -116,34 +116,29 @@ statement:
         Statement.FunCall ($1, [], pos), pos
     }
     // Multi-argument calls also are parenthesized
-    | ID LPAREN expr_list RPAREN {
+    | ID LPAREN exprs RPAREN {
         let pos = pos.union (snd $1) $4
         Statement.FunCall ($1, fst $3, pos), pos
     }
 
-statement_list_opt:
+statements_opt:
     | {
         []
     }
-    | statement_list {
+    | statements {
         (fst $1)
     }
 
-statement_list:
-    | statement_list_rev {
-        List.rev (fst $1), snd $1
-    }
-
-statement_list_rev:
+statements:
     | statement {
         [fst $1], snd $1
     }
-    | statement_list_rev statement {
-        fst $2 :: fst $1, pos.union (snd $1) (snd $2)
+    | statement statements {
+        fst $1 :: fst $2, pos.union (snd $1) (snd $2)
     }
 
 commands:
-    | LBRACK statement_list_opt RBRACK {
+    | LBRACK statements_opt RBRACK {
         $2, pos.union $1 $3
     }
 
@@ -180,12 +175,12 @@ expr:
         FunCall ($1, [], pos), pos
     }
     // Multi-argument calls also are parenthesized
-    | ID LPAREN expr_list RPAREN {
+    | ID LPAREN exprs RPAREN {
         let pos = pos.union (snd $1) $4
         FunCall ($1, fst $3, pos), pos
     }
     // A list is an expression, not to be confused with statement blocks.
-    | LBRACK expr_list_opt RBRACK {
+    | LBRACK exprs_opt RBRACK {
         let pos = pos.union $1 $3
         List ($2, pos), pos
     }
@@ -230,42 +225,34 @@ expr:
         NotEq (fst $1, fst $3, pos), pos
     }
 
-expr_list_opt:
+exprs_opt:
     | {
         []
     }
-    | expr_list {
+    | exprs {
         fst $1
     }
 
-expr_list:
-    | expr_list_rev {
-        List.rev (fst $1), snd $1
-    }
-
-expr_list_rev:
+exprs:
     | expr {
         [fst $1], snd $1
     }
-    | expr_list_rev expr {
-        fst $2 :: fst $1, pos.union (snd $1) (snd $2)
+    | expr exprs {
+        fst $1 :: fst $2, pos.union (snd $1) (snd $2)
     }
 
-var_list_opt:
+vars_opt:
     | {
         []
     }
-    | var_list {
+    | vars {
         fst $1
     }
 
-var_list:
-    | var_list_rev { List.rev (fst $1), snd $1 }
-
-var_list_rev:
+vars:
     | VAR {
         [$1], snd $1
     }
-    | var_list_rev VAR {
-        $2 :: fst $1, pos.union (snd $1) (snd $2)
+    | VAR vars {
+        $1 :: fst $2, pos.union (snd $1) (snd $2)
     }

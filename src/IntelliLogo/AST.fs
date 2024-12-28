@@ -2,47 +2,31 @@ namespace IntelliLogo
 
 open FSharp.Text
 
-module Var =
-    let mutable counter = 0
-    let Fresh s =
-        counter <- counter+1
-        sprintf "%s'%d" s counter
-
 [<StructuredFormatDisplay("{ToString}")>]
 type pos =
     {
-        Filename: string
         StartLine: int
         StartColumn: int
         EndLine: int
         EndColumn: int
     }
 
-    static member Dummy() =
-        {
-            Filename = "<dummy>"
-            StartLine = 1
-            StartColumn = 1
-            EndLine = 1
-            EndColumn = 1
-        }
-
     member this.ToString =
-        sprintf "\"%s\" %d:%d-%d:%d" this.Filename this.StartLine this.StartColumn this.EndLine this.EndColumn
+        sprintf "%d:%d-%d:%d" this.StartLine this.StartColumn this.EndLine this.EndColumn
 
     static member ofToken (lexbuf: Lexing.LexBuffer<char>) =
-        let pos1 = lexbuf.StartPos in
-        let pos2 = lexbuf.EndPos in
         {
-            Filename = pos1.FileName
-            StartLine = pos1.Line
-            StartColumn = pos1.Column
-            EndLine = pos2.Line
-            EndColumn = pos2.Column
+            // TODO: check why pos.Column returns wrong value
+            StartLine = lexbuf.StartPos.Line
+            StartColumn = lexbuf.StartPos.Column
+            EndLine = lexbuf.EndPos.Line
+            EndColumn = lexbuf.EndPos.Column
         }
 
     static member union pos1 pos2 =
-        { pos1 with pos.EndLine = pos2.EndLine; EndColumn = pos2.EndColumn }
+        { pos1 with
+            pos.EndLine = pos2.EndLine
+            pos.EndColumn = pos2.EndColumn }
 
 exception ParserError of string * pos
 
@@ -65,7 +49,6 @@ module AST =
         | MakeLocal of id * Expr * pos
         // local "i
         | Local of id * pos
-        // Function calls are assumed to be commands
         | FunCall of id * Expr list * pos
         // Expressions can be returned with "output"
         | Output of Expr * pos

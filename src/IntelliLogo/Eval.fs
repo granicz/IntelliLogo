@@ -8,14 +8,14 @@ module Parse =
         let lexbuf = LexBuffer<char>.FromString text
         let initPos =
             {
-                pos_fname = "..."
+                pos_fname = ""
                 pos_orig_lnum = 1
                 pos_cnum = 1
                 pos_lnum = 1
                 pos_bol = 0
             }
-        lexbuf.EndPos <- initPos
         lexbuf.StartPos <- initPos
+        lexbuf.EndPos <- initPos
         try
             Ok <| Parser.program Lexer.main lexbuf
         with
